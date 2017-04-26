@@ -78,6 +78,7 @@ typedef struct {
 
 
 typedef struct {
+    unsigned                    publish:1;
     ngx_str_t                   command;
     u_char                      name[NGX_RTMP_MAX_NAME];
     u_char                      args[NGX_RTMP_MAX_ARGS];
@@ -930,6 +931,7 @@ ngx_rtmp_log_publish(ngx_rtmp_session_t *s, ngx_rtmp_publish_t *v)
         goto next;
     }
     ngx_str_set(&ctx->command, "PUBLISH");
+    ctx->publish = 1;
 
     ngx_rtmp_log(s);
 
@@ -952,6 +954,7 @@ ngx_rtmp_log_play(ngx_rtmp_session_t *s, ngx_rtmp_play_t *v)
         goto next;
     }
     ngx_str_set(&ctx->command, "PLAY");
+    ctx->publish = 0;
 
     ngx_rtmp_log(s);
 
@@ -974,7 +977,11 @@ ngx_rtmp_log_disconnect(ngx_rtmp_session_t *s, ngx_rtmp_header_t *h,
     if (ctx == NULL) {
         return NGX_OK;
     }
-    ngx_str_set(&ctx->command, "DISCONNECT");
+    if (ctx->publish) {
+        ngx_str_set(&ctx->command, "UNPUBLISH");
+    } else {
+        ngx_str_set(&ctx->command, "STOP");
+    }
 
     ngx_rtmp_log(s);
 
